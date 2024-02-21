@@ -45,7 +45,7 @@ int main(int argc, char** argv){
     void *ptr; 
 
     // open the shared memory object 
-    shm_fd = shm_open(name, O_CREAT | O_RDWR, 0777);
+    shm_fd = shm_open(name, O_CREAT | O_RDWR, 0666);
 
     // error checking for unvalid file name 
     if (shm_fd == -1) {
@@ -58,8 +58,10 @@ int main(int argc, char** argv){
     // print the pid 
     printf("pid: %d\n", getpid());
 
+    ftruncate(shm_fd, SIZE);
+
     // wait 10 seconds 
-    sleep(10);
+    // sleep(10);
 
     // me trying to debug but it flopped so 
 
@@ -85,7 +87,7 @@ int main(int argc, char** argv){
     printf("shm_fd: %d, SIZE: %d\n", shm_fd, SIZE);
     
     // memory map the shared memory object
-    ptr = mmap(0, SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    ptr = mmap(0, SIZE, PROT_WRITE, MAP_SHARED, shm_fd, 0);
 
     // check for error in creating shared memory
     if (ptr == MAP_FAILED) {
@@ -134,13 +136,13 @@ int main(int argc, char** argv){
             // this is giving a seg fault 
             printf("%s\n", (char *)ptr);
             
-            // // remove the shared memory object
-            // shm_unlink(name);
+            // remove the shared memory object
+            shm_unlink(name);
 
-            // // calculate time elapsed during system call
-            // int timeElapsed = endtime.tv_sec - atoi((char *)ptr);
-            // printf("Time elapsed: %d\n", timeElapsed);
-            // break;
+            // calculate time elapsed during system call
+            int timeElapsed = endtime.tv_sec - atoi((char *)ptr);
+            printf("Time elapsed: %d\n", timeElapsed);
+            break;
     }
 
     // printf("running ps with execlp\n");
@@ -154,10 +156,11 @@ int main(int argc, char** argv){
 
     // return 0;
     
-    free(ptr);
-    ptr = NULL;
-    free(message);
-    message = NULL;
+    // remove the shared memory object
+    // free(ptr);
+    // ptr = NULL;
+    // free(message);
+    // message = NULL;
 
     return 0;
 }

@@ -45,7 +45,7 @@ int main(int argc, char** argv){
     void *ptr; 
 
     // open the shared memory object 
-    shm_fd = shm_open(name, O_CREAT | O_RDWR, 0666);
+    shm_fd = shm_open(name, O_CREAT | O_RDWR, 0777);
 
     // error checking for unvalid file name 
     if (shm_fd == -1) {
@@ -53,9 +53,46 @@ int main(int argc, char** argv){
         printf("shared memory failed\n");
         exit(EXIT_FAILURE);
     }
+    // // check for memory overwrite errors
+
+    // print the pid 
+    printf("pid: %d\n", getpid());
+
+    // wait 10 seconds 
+    sleep(10);
+
+    // me trying to debug but it flopped so 
+
+    // FILE *fp;
+    // char path[1024];
+
+    // // Open the /proc/self/maps file
+    // fp = fopen("/proc/self/maps", "r");
+    // if (fp == NULL) {
+    //     perror("Error opening /proc/self/maps");
+    //     return 1;
+    // }
+
+    // // Read and print each line
+    // while (fgets(path, sizeof(path), fp) != NULL) {
+    //     printf("%s", path);
+    // }
+
+    // // Close the file
+    // fclose(fp);
+
+    // print out the values of the arguments before calling mmap
+    printf("shm_fd: %d, SIZE: %d\n", shm_fd, SIZE);
     
     // memory map the shared memory object
-    ptr = mmap(0, SIZE, PROT_READ, MAP_SHARED, shm_fd, 0);
+    ptr = mmap(0, SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+
+    // check for error in creating shared memory
+    if (ptr == MAP_FAILED) {
+        close(shm_fd);
+        perror("mmap");
+        exit(EXIT_FAILURE);
+    }
 
     // write to shared memory object 
 
@@ -78,11 +115,10 @@ int main(int argc, char** argv){
             struct timeval current;
             gettimeofday(&current,NULL);
             printf("Seconds: %ld\n", current.tv_sec);
-            // execute the system call 
-            execlp(argv[1], argv[1], NULL);
-            
             // put the time into the shared memory object
             sprintf(ptr, "%ld", current.tv_sec);
+            // execute the system call 
+            execlp(argv[1], argv[1], NULL);
             break;
         default:
             message = "This is the parent";
@@ -94,15 +130,17 @@ int main(int argc, char** argv){
             struct timeval endtime;
             gettimeofday(&endtime,NULL);
             // get the time from the shared memory object
+
+            // this is giving a seg fault 
             printf("%s\n", (char *)ptr);
             
-            // remove the shared memory object
-            shm_unlink(name);
+            // // remove the shared memory object
+            // shm_unlink(name);
 
-            // calculate time elapsed during system call
-            int timeElapsed = endtime.tv_sec - atoi((char *)ptr);
-            printf("Time elapsed: %d\n", timeElapsed);
-            break;
+            // // calculate time elapsed during system call
+            // int timeElapsed = endtime.tv_sec - atoi((char *)ptr);
+            // printf("Time elapsed: %d\n", timeElapsed);
+            // break;
     }
 
     // printf("running ps with execlp\n");
@@ -116,9 +154,10 @@ int main(int argc, char** argv){
 
     // return 0;
     
-    
-
-
+    free(ptr);
+    ptr = NULL;
+    free(message);
+    message = NULL;
 
     return 0;
 }

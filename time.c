@@ -36,7 +36,7 @@ int main(int argc, char** argv){
     const int SIZE = 4096;
 
     // name of shared memory object
-    const char *name = "/booty";
+    const char *name = "/os";
 
     // shared memory file descriptor
     int shm_fd;
@@ -47,7 +47,7 @@ int main(int argc, char** argv){
     // open the shared memory object 
     shm_fd = shm_open(name, O_CREAT | O_RDWR, 0666);
 
-    // error checking for unvalid file name 
+    // error checking for invalid file name 
     if (shm_fd == -1) {
         // perror("shm_open");
         printf("shared memory failed\n");
@@ -116,9 +116,14 @@ int main(int argc, char** argv){
             // get time of fuction call
             struct timeval current;
             gettimeofday(&current,NULL);
-            printf("Seconds: %ld\n", current.tv_sec);
+            // printf("Starting time: %ld\n", current.tv_sec);
+            // // put the time into the shared memory object
+            // sprintf(ptr, "%ld", current.tv_sec);
+
+            printf("Starting time: %ld.%06d\n", current.tv_sec, current.tv_usec);
             // put the time into the shared memory object
-            sprintf(ptr, "%ld", current.tv_sec);
+            sprintf(ptr, "%ld.%06d", current.tv_sec, current.tv_usec);
+
             // execute the system call 
             execlp(argv[1], argv[1], NULL);
             break;
@@ -131,17 +136,37 @@ int main(int argc, char** argv){
             // get time when system call is finished
             struct timeval endtime;
             gettimeofday(&endtime,NULL);
+            // printf("ENDING time: %ld.%06d\n", endtime.tv_sec, endtime.tv_usec);
+
             // get the time from the shared memory object
 
             // this is giving a seg fault 
-            printf("%s\n", (char *)ptr);
+            printf("start time passed in %s\n", (char *)ptr);
             
             // remove the shared memory object
             shm_unlink(name);
 
             // calculate time elapsed during system call
-            int timeElapsed = endtime.tv_sec - atoi((char *)ptr);
-            printf("Time elapsed: %d\n", timeElapsed);
+            // int timeElapsed = endtime.tv_sec - atoi((char *)ptr);
+            // printf("Time elapsed: %d\n", timeElapsed);
+
+            char timeString[30]; 
+
+            // format the time string and store it in the variable timeString
+            snprintf(timeString, sizeof(timeString), "%ld.%06d", endtime.tv_sec, endtime.tv_usec);
+
+            printf("END TIME: %s", timeString);
+
+            // convert strings to doubles
+            double number1 = strtod((char *)ptr, NULL);
+            double number2 = strtod(timeString, NULL);
+
+            double result = number2 - number1;
+
+            printf("\nResult: %f\n", result);
+
+            // printf("time elapsed: %s, timeElapsed")
+
             break;
     }
 

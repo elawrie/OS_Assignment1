@@ -1,0 +1,5 @@
+pid: 20213
+shm_fd: 3, SIZE: 4096
+Starting time: 1708814530.948536
+README.md       time            time.c
+Elapsed time: 0.2986 seconds

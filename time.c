@@ -10,6 +10,7 @@
 
 // main
 int main(int argc, char** argv){
+    
     // error checking -- make sure user enters a valid command
     if (argc != 2) {
         printf("Usage: %s <command>\n", argv[0]);
@@ -38,13 +39,8 @@ int main(int argc, char** argv){
         exit(EXIT_FAILURE);
     }
 
-    // print the pid 
-    printf("pid: %d\n", getpid());
-
+    // configure size of shared memory object
     ftruncate(shm_fd, SIZE);
-
-    // print out the values of the arguments before calling mmap
-    printf("shm_fd: %d, SIZE: %d\n", shm_fd, SIZE);
     
     // memory map the shared memory object
     ptr = mmap(0, SIZE, PROT_WRITE, MAP_SHARED, shm_fd, 0);
@@ -67,16 +63,14 @@ int main(int argc, char** argv){
             // child process
 
             // get starting time before fuction call 
-            // (declaring struct timeval current; here caused compile issue)
             gettimeofday(&current,NULL);
-
-            printf("Starting time: %ld.%06d\n", current.tv_sec, current.tv_usec);
     
             // copy starting time into shared memory object
             memcpy(ptr, &current, sizeof(struct timeval));
 
             // execute the system call 
             execlp(argv[1], argv[1], NULL);
+            
             break;
         default:
             // parent process
@@ -103,6 +97,7 @@ int main(int argc, char** argv){
                 time_passed.tv_usec = endtime.tv_usec - ptr->tv_usec;
             }
 
+            // print the time elapsed result
             printf("Elapsed time: %ld.%ld seconds\n", time_passed.tv_sec, (long)time_passed.tv_usec);
 
             break;

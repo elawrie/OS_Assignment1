@@ -5,4 +5,4 @@
 
 ### Instructions:
 #### gcc time.c -o time
-#### ./time <command>
+#### ./time command

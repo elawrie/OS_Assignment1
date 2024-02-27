@@ -1,2 +1,4 @@
+gcc time.c -o time
+./time ls
 README.md       time            time.c
 Elapsed time: 0.2986 seconds

@@ -1,4 +1,4 @@
 gcc time.c -o time
 ./time ls
-README.md       time            time.c
+README.md       output.txt           time            time.c
 Elapsed time: 0.2986 seconds

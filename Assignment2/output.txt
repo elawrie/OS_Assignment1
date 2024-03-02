@@ -1,0 +1,3 @@
+gcc mcarlo.c -o mcarlo
+./mcarlo 1000000      
+Estimated value of pi: 3.145032

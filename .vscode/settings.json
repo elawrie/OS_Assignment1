@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "unistd.h": "c",
-        "__node_handle": "c"
+        "__node_handle": "c",
+        "list.h": "c"
     }
 }

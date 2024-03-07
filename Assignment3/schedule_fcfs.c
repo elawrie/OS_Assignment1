@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "list.h"  // include the task header file
+#include "cpu.h"
 
 // create the head of the list 
 struct node* head = NULL;
@@ -19,8 +20,40 @@ void add(char *name, int priority, int burst) {
 }
 
 // function to pick the next task
-Task* pickNextTask() {
-    // goes through the list and picks the next one sequentially for this type 
+// Task* pickNextTask() {
+    // // goes through the list and picks the next one sequentially for this type 
+    // if (head == NULL) {
+    //     // if the list is empty, return NULL
+    //     return NULL;
+    // }
+
+    // struct node *nextTask = head->task;
+
+    // return nextTask;
+     // error handling for when the list is empty
+//     if (head == NULL) {
+//         return NULL;
+//     }
+//     struct task *nextTask = head->task;
+//     head = head->next;
+//     return nextTask;
+// }
+Task* pickNextTask(struct node **head) {
+    if (*head == NULL) {
+        // If the list is empty, return NULL
+        return NULL;
+    }
+
+    Task* nextTask = (*head)->task;
+    struct node *temp = *head;
+
+    // Move the head to the next node
+    *head = (*head)->next;
+
+    // Free the memory of the node (optional, depending on your design)
+    free(temp);
+
+    return nextTask;
 }
 
 // do logic for algos in the ADD FUNCTION
@@ -29,15 +62,25 @@ Task* pickNextTask() {
 
 // function to schedule the tasks 
 void schedule() {
-
+    // struct task *task = head->task;
+    // // loop through and schedule tasks 
+    // while (task != NULL) {
+    //     task = pickNextTask();
+    //     // call the CPU run function 
+    //     run(task, task->burst);
+    //     // increments head to the next 
+    //     delete(&head, task);
+    // }
+    // traverse(head);
+    // printf("HEAD: %s", head->task->name);
     Task* task;
-    // loop through and schedule tasks 
-    while (task != NULL) {
-        task = pickNextTask();
-        // call the CPU run function 
-        run(task, task->burst);
-        // increments head to the next 
-        delete(&head, task);
+    while ((task = pickNextTask(&head)) != NULL) {
+    // Execute the task (you might want to call your CPU run function here)
+        printf("Executing task: %s\n", task->name);
+    // You can perform other operations related to the execution
+
+    // Free the memory of the task if needed (depends on your design)
+        free(task);
     }
 }
 

@@ -29,31 +29,33 @@ void add(char *name, int priority, int burst) {
 }
 
 // function to pick the next task
-Task* pickNextTask() {
-    struct node *temp;
-    Task* task = head->task;
-    temp = head->next; 
+// Task* pickNextTask() {
+//     struct node *temp;
+//     Task* task = head->task;
+//     temp = head->next; 
 
-    // while loop temp != null
-    // if task burst from temp is less than the task burst that you got, then pick it! (which task burst is less)
-    // save the one with the lower burst
-    // find minumum in the list 
-    // increment the temp pointer (temp = temp->next)
-    // return the minimum that you found 
-}
+//     // while loop temp != null
+//     // if task burst from temp is less than the task burst that you got, then pick it! (which task burst is less)
+//     // save the one with the lower burst
+//     // find minumum in the list 
+//     // increment the temp pointer (temp = temp->next)
+//     // return the minimum that you found 
+// }
 
 
 
 // function to schedule the tasks 
 void schedule() {
 
-    Task* task;
-    // loop through and schedule tasks 
-    while (task != NULL) {
-        task = pickNextTask();
-        // call the CPU run function 
-        run(task, task->burst);
-        // increments head to the next 
-        delete(&head, task);
-    }
+    // Task* task;
+    // // loop through and schedule tasks 
+    // while (task != NULL) {
+    //     task = pickNextTask();
+    //     // call the CPU run function 
+    //     run(task, task->burst);
+    //     // increments head to the next 
+    //     delete(&head, task);
+    // }
+    traverse(head);
+    printf("HEAD: %s", head->task->name);
 }

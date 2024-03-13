@@ -180,14 +180,14 @@ void schedule() {
             run(task, QUANTUM);
             task->burst -= QUANTUM;
             totalExecTime += QUANTUM; // increment every time a task is executed
-            avgTurnaroundTime += QUANTUM;
+            // avgTurnaroundTime += QUANTUM;
         } else {
             run(task, task->burst);
             // increment statistics
             avgWaitingTime += task->waitingTime;
             // avgResponseTime += task->waitingTime + task->burst;
             // clean up so burst becomes 0
-            avgTurnaroundTime += task->burst;
+            // avgTurnaroundTime += task->burst;
             totalExecTime += task->burst; 
             task->burst = 0;
             delete(&head, task);

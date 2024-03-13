@@ -128,7 +128,7 @@ void schedule() {
     printf("Average Turnaround Time: %.2f\n", avgTurnaroundTime / size);
     printf("Average Waiting Time: %.2f\n", avgWaitingTime / size);
     // print avg waiting time
-    // printf("Average Waiting Time TRUST: %.2f\n", avgWaitingTime);
+    printf("Average Waiting Time TRUST: %.2f\n", avgWaitingTime);
     // print avg response time
     // printf("Average Response Time TRUST: %.2f\n", avgResponseTime);
     // when it first gets to run 

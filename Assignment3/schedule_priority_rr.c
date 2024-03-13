@@ -263,8 +263,8 @@ void schedule() {
                 } else {
                     run(task, task->burst);
                     // clean up so burst becomes 0
-                    task->burst = 0;
                     totalExecTime += task->burst;
+                    task->burst = 0;
                     ++numTasks;
                     delete(&lists[currPrio], task);
                 }

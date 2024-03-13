@@ -53,6 +53,7 @@ void add(char *name, int priority, int burst) {
     while (current->next != NULL && burst >= current->next->task->burst) {
         current = current->next;
     }
+    
     struct node *newNode = malloc(sizeof(struct node));
     newNode->task = newTask;
     newNode->next = current->next;
@@ -73,7 +74,7 @@ Task* pickNextTask(struct node **head) {
 
     // calculate waiting time for all remaining tasks
     struct node *current = *head;
-    while (current->next != NULL && current->next != NULL) {
+    while (current->next != NULL) {
         current->next->task->waitingTime += current->task->burst;
         current = current->next;
     }
@@ -126,6 +127,10 @@ void schedule() {
         // increment statistics
         avgWaitingTime += task->waitingTime;
         avgTurnaroundTime += task->burst;
+
+        // add wait time to turnaround
+        avgTurnaroundTime += task->waitingTime;
+
         avgResponseTime += task->waitingTime;
     // You can perform other operations related to the execution
 
@@ -136,5 +141,7 @@ void schedule() {
     // print average statistics 
     printf("Average Turnaround Time: %.2f\n", avgTurnaroundTime / size);
     printf("Average Waiting Time: %.2f\n", avgWaitingTime / size);
+    printf("Average Waiting Time: %.2f\n", avgWaitingTime);
+
     printf("Average Response Time: %.2f\n", avgResponseTime / size);
 }

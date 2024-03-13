@@ -78,7 +78,7 @@ void schedule() {
     }
 
     // print average statistics 
-    printf("Average Turnaround Time: %.2f\n", avgTurnaroundTime / size);
+    printf("Average Turnaround Time: %.2f\n", (avgTurnaroundTime + avgWaitingTime) / size);
     printf("Average Waiting Time: %.2f\n", avgWaitingTime / size);
     printf("Average Response Time: %.2f\n", avgResponseTime / size);
 }

@@ -191,7 +191,7 @@ int turnaroundTotal = 0;
 int waitingTotal = 0;
 int responseTotal = 0;
 int totalExecTime = 0;
-int numTasks = 0;
+int size = 0;
 
 // create list of lists
 struct node* lists[MAX_PRIORITY + 1] = {NULL};
@@ -210,12 +210,36 @@ void add(char *name, int priority, int burst) {
     t->tid = tid++;
     t->priority = priority;
     t->burst = burst;
+    turnaroundTotal += burst;
     t->responseTime = -1; // -1 to indicate task hasn't started yet
+    ++size;
     insert(&lists[priority], t);
 }
 
+// void incrementWaitTime(struct node *head, int waitTime) {
+//     struct node* current = head;
+//     while (current->next != NULL) {
+//         // increment wait time
+//         current->next->task->waitingTime += waitTime;
+//         current = current->next;
+//     }
+//     printf("NULL\n");
+// }
+
 // pick next task
 Task* pickNextTask() {
+
+    // calculate waiting time for all remaining tasks
+    struct node *curr = lists[tempNode->task->priority]; // 8 , [5,4], 1, ... 
+    // struct node *curr = tempNode;
+    for (int i = MAX_PRIORITY; i >= MIN_PRIORITY; i--) {
+        incrementWaitTime(lists[curr->task->priority], curr->task->burst);
+        while (curr->next != NULL && curr->task->priority) {
+            curr->next->task->waitingTime += curr->task->burst;
+            curr = curr->next;
+        }
+    }
+
     // if length of task lisk is 1, run until completion
     // if greater, run using round robin
     Task* t = tempNode->task;
@@ -242,37 +266,65 @@ void schedule() {
         while(lists[currPrio] != NULL) {
             task = pickNextTask();
             
+            // print task
+            printf("task name AT TOP PLSSS: %s\n", task->name);
+            // curr node print
+            printf("curr node name: %s\n", tempNode->task->name);
+
             // check if task has been picked yet?
             if (task->responseTime == -1) {
                 task->responseTime = totalExecTime;
-                printf("\nresponse time for task %s: %d\n\n", task->name, totalExecTime);
+                // printf("\nresponse time for task %s: %d\n\n", task->name, totalExecTime);
                 responseTotal += task->responseTime;
             }
-
+            // if no round robin
             if(!ifReschedule()) {
                 totalExecTime += task->burst;
                 run(task, task->burst);
-                ++numTasks;
                 delete(&lists[currPrio], task);
+                // print current task waiting time and name
+                printf("current task WAITING TIMEEE: %d\n", task->waitingTime);
+                printf("current task NAME: %s\n", task->name);
+                // add waiting time to current node 
+
+                // calculate waiting time
+                waitingTotal += task->waitingTime;
             } else { // round robin condition
+                
+                // print out current task name
+                printf("current task NAME: %s\n", task->name);
+                // calculate individual waiting time 
+                tempNode->task->waitingTime += task->burst;
+                
                 if(task->burst > QUANTUM) {
                     run(task, QUANTUM);
                     task->burst -= QUANTUM;
                     totalExecTime += QUANTUM;
-                    ++numTasks;
                 } else {
                     run(task, task->burst);
+                    // calculate waiting time
+                    waitingTotal += task->waitingTime;
+                    printf("current task WAITING TIMEEE: %d\n", task->waitingTime);
+                    printf("current task NAME: %s\n", task->name);
                     // clean up so burst becomes 0
                     totalExecTime += task->burst;
                     task->burst = 0;
-                    ++numTasks;
                     delete(&lists[currPrio], task);
                 }
             }
+            printf("IM HERE\n");
         }
     }
-    // // calculate average turnaround time, waiting time, and response time
-    // printf("\nTotal Number of Tasks: %d\n", numTasks);
+    // calculate average statistics 
+    // printf("\nTotal Number of Tasks: %d\n", size);
     // printf("Total Turnaround Time: %d\n", turnaroundTotal);
-    printf("Average Response Time: %.2f\n", ((double)responseTotal / (double)numTasks));
+    // print total response 
+    printf("Total Response Time: %d\n", responseTotal);
+    // print size 
+    printf("Size: %d\n", size);
+    printf("Average Response Time: %.2f\n", ((double)responseTotal / (double)size));
+    // print total waiting time
+    printf("Total Waiting Time: %d\n", waitingTotal);
+    // print average waiting time
+    printf("Average Waiting Time: %.2f\n", ((double)waitingTotal / (double)size));
 }

@@ -96,6 +96,10 @@ void schedule() {
         // increment statistics
         avgWaitingTime += task->waitingTime;
         avgTurnaroundTime += task->burst;
+
+        // add wait time to turnaround
+        avgTurnaroundTime += task->waitingTime;
+        
         // print task waiting time 
         // printf("Waiting Time: %d\n", task->waitingTime);
         avgResponseTime += task->waitingTime;

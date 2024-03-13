@@ -190,6 +190,7 @@
 int turnaroundTotal = 0;
 int waitingTotal = 0;
 int responseTotal = 0;
+int totalExecTime = 0;
 int numTasks = 0;
 
 // create list of lists
@@ -209,6 +210,7 @@ void add(char *name, int priority, int burst) {
     t->tid = tid++;
     t->priority = priority;
     t->burst = burst;
+    t->responseTime = -1; // -1 to indicate task hasn't started yet
     insert(&lists[priority], t);
 }
 
@@ -239,7 +241,16 @@ void schedule() {
         tempNode = lists[currPrio];
         while(lists[currPrio] != NULL) {
             task = pickNextTask();
+            
+            // check if task has been picked yet?
+            if (task->responseTime == -1) {
+                task->responseTime = totalExecTime;
+                printf("\nresponse time for task %s: %d\n\n", task->name, totalExecTime);
+                responseTotal += task->responseTime;
+            }
+
             if(!ifReschedule()) {
+                totalExecTime += task->burst;
                 run(task, task->burst);
                 ++numTasks;
                 delete(&lists[currPrio], task);
@@ -247,13 +258,13 @@ void schedule() {
                 if(task->burst > QUANTUM) {
                     run(task, QUANTUM);
                     task->burst -= QUANTUM;
-                    turnaroundTotal += task->burst;
+                    totalExecTime += QUANTUM;
                     ++numTasks;
                 } else {
                     run(task, task->burst);
                     // clean up so burst becomes 0
                     task->burst = 0;
-                    turnaroundTotal += task->burst;
+                    totalExecTime += task->burst;
                     ++numTasks;
                     delete(&lists[currPrio], task);
                 }
@@ -263,5 +274,5 @@ void schedule() {
     // // calculate average turnaround time, waiting time, and response time
     // printf("\nTotal Number of Tasks: %d\n", numTasks);
     // printf("Total Turnaround Time: %d\n", turnaroundTotal);
-    // printf("Average Turnaround Time: %.2f\n", ((double)turnaroundTotal / (double)numTasks));
+    printf("Average Response Time: %.2f\n", ((double)responseTotal / (double)numTasks));
 }

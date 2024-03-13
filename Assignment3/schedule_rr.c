@@ -121,6 +121,8 @@ struct node *temp;
 
 float avgTurnaroundTime = 0, avgWaitingTime = 0, avgResponseTime = 0;
 int size = 0;
+int totalExecTime = 0;
+
 
 // define TID for each process
 int tid = 0;
@@ -134,6 +136,7 @@ void add(char *name, int priority, int burst) {
     newTask->priority = priority;
     newTask->burst = burst;
     avgTurnaroundTime += burst;
+    newTask->responseTime = -1; // -1 to indicate task hasn't started yet
     insert(&head, newTask);
 }
 
@@ -165,9 +168,18 @@ void schedule() {
     temp = head;
     while (head != NULL) {
         task = pickNextTask();
+
+        // checking if task has been picked yet to start
+        if (task->responseTime == -1) {
+            task->responseTime = totalExecTime;
+            printf("\nresponse time for task %s: %d\n\n", task->name, totalExecTime);
+            avgResponseTime += task->responseTime;
+        }
+
         if(task->burst > QUANTUM) {
             run(task, QUANTUM);
             task->burst -= QUANTUM;
+            totalExecTime += QUANTUM; // increment every time a task is executed
             avgTurnaroundTime += QUANTUM;
         } else {
             run(task, task->burst);
@@ -176,6 +188,7 @@ void schedule() {
             // avgResponseTime += task->waitingTime + task->burst;
             // clean up so burst becomes 0
             avgTurnaroundTime += task->burst;
+            totalExecTime += task->burst; 
             task->burst = 0;
             delete(&head, task);
         }

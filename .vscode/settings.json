@@ -2,6 +2,9 @@
     "files.associations": {
         "unistd.h": "c",
         "__node_handle": "c",
-        "list.h": "c"
+        "list.h": "c",
+        "schedulers.h": "c",
+        "typeinfo": "c",
+        "cpu.h": "c"
     }
 }

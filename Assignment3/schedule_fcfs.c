@@ -5,17 +5,26 @@
 
 // create the head of the list 
 struct node* head = NULL;
+// struct node* tempHead;
+float avgTurnaroundTime = 0, avgWaitingTime = 0, avgResponseTime = 0;
+
 
 // make the TID for each process
 int tid = 0;
 
+int size = 0;
+
 // function to add the tasks to the list 
 void add(char *name, int priority, int burst) {
     Task *newTask = malloc(sizeof(Task));
+    ++size;
     newTask->name = name;
-    newTask->tid = tid++;
+    newTask->tid = __sync_fetch_and_add(&newTask->tid,1);
     newTask->priority = priority;
     newTask->burst = burst;
+    // if (head == NULL) {
+    //     tempHead->task = newTask;
+    // }
     insert(&head, newTask);
 }
 
@@ -42,6 +51,13 @@ Task* pickNextTask(struct node **head) {
     if (*head == NULL) {
         // If the list is empty, return NULL
         return NULL;
+    }
+
+    // calculate waiting time for all remaining tasks
+    struct node *current = *head;
+    while (current->next != NULL) {
+        current->next->task->waitingTime += current->task->burst;
+        current = current->next;
     }
 
     Task* nextTask = (*head)->task;
@@ -77,11 +93,45 @@ void schedule() {
     while ((task = pickNextTask(&head)) != NULL) {
     // Execute the task (you might want to call your CPU run function here)
         printf("Executing task: %s\n", task->name);
+        // increment statistics
+        avgWaitingTime += task->waitingTime;
+        avgTurnaroundTime += task->burst;
+        // print task waiting time 
+        // printf("Waiting Time: %d\n", task->waitingTime);
+        avgResponseTime += task->waitingTime;
+        // print task response time
+        // printf("Response Time: %d\n", task->waitingTime + task->burst);
     // You can perform other operations related to the execution
 
     // Free the memory of the task if needed (depends on your design)
         free(task);
     }
+    // calculate average statistics
+    // average response time is the turnaround time (burst) plus the wait time 
+    // struct node *current = tempHead;
+    // printf("HEAD: %s", tempHead->task->name);
+    // while (current != NULL) {
+    //     size++;
+    //     avgTurnaroundTime += current->task->burst;
+    //     avgWaitingTime += current->task->waitingTime;
+    //     avgResponseTime += current->task->waitingTime + current->task->burst;
+    //     current = current->next;
+    // }
+
+
+
+    // turnaround is wait + burst 
+    printf("Average Turnaround Time: %.2f\n", avgTurnaroundTime / size);
+    printf("Average Waiting Time: %.2f\n", avgWaitingTime / size);
+    // print avg waiting time
+    // printf("Average Waiting Time TRUST: %.2f\n", avgWaitingTime);
+    // print avg response time
+    // printf("Average Response Time TRUST: %.2f\n", avgResponseTime);
+    // when it first gets to run 
+    // have to look at RR time for RR (quantum)
+    // look at it in txt file 
+    printf("Average Response Time: %.2f\n", avgResponseTime / size);
+
 }
 
 // void add(Task tasks[], int n) {

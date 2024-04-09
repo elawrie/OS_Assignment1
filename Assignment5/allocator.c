@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_MEMORY_SIZE 1048576  // 1 MB
-
 // Structure to represent a block of memory
 typedef struct {
     int start_address;
@@ -18,11 +16,6 @@ typedef struct {
     int size;
 } Process;
 
-// Global variables
-MemoryBlock memory[MAX_MEMORY_SIZE];
-Process processes[MAX_MEMORY_SIZE];
-int num_processes = 0;
-
 // Function prototypes
 void initialize_memory(int size);
 void request_memory(char *process_name, int size, char strategy);
@@ -30,10 +23,18 @@ void release_memory(char *process_name);
 void compact_memory();
 void report_status();
 
-int main() {
-    int initial_memory_size;
-    printf("Enter initial memory size: ");
-    scanf("%d", &initial_memory_size);
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        printf("Usage: ./allocator <memory_size>\n");
+        return 1;
+    }
+
+    int initial_memory_size = atoi(argv[1]);
+    if (initial_memory_size <= 0) {
+        printf("Invalid memory size.\n");
+        return 1;
+    }
+
     initialize_memory(initial_memory_size);
 
     char command[10];
@@ -65,11 +66,25 @@ int main() {
     return 0;
 }
 
+// Global variables
+MemoryBlock *memory = NULL;
+Process *processes = NULL;
+int num_processes = 0;
+int max_memory_size = 0;
+
 // Initialize memory with one hole representing the whole memory
 void initialize_memory(int size) {
+    memory = (MemoryBlock *)malloc(sizeof(MemoryBlock));
+    if (memory == NULL) {
+        printf("Memory allocation failed.\n");
+        exit(1);
+    }
+
     memory[0].start_address = 0;
     memory[0].size = size;
     strcpy(memory[0].status, "Unused");
+
+    max_memory_size = size;
 }
 
 // Request memory for a process using the specified strategy
@@ -81,7 +96,14 @@ void request_memory(char *process_name, int size, char strategy) {
         return;
     }
 
-    for (i = 0; i < MAX_MEMORY_SIZE; i++) {
+    for (i = 0; i < num_processes; i++) {
+        if (strcmp(processes[i].name, process_name) == 0) {
+            printf("Process '%s' already has memory allocated.\n", process_name);
+            return;
+        }
+    }
+
+    for (i = 0; i < max_memory_size; i++) {
         if (strcmp(memory[i].status, "Unused") == 0 && memory[i].size >= size) {
             if (strategy == 'F' || (strategy == 'B' && (index == -1 || memory[i].size < memory[index].size)) ||
                 (strategy == 'W' && (index == -1 || memory[i].size > memory[index].size))) {
@@ -95,6 +117,12 @@ void request_memory(char *process_name, int size, char strategy) {
         return;
     }
 
+    processes = (Process *)realloc(processes, (num_processes + 1) * sizeof(Process));
+    if (processes == NULL) {
+        printf("Memory allocation failed.\n");
+        exit(1);
+    }
+
     processes[num_processes].start_address = memory[index].start_address;
     processes[num_processes].size = size;
     strcpy(processes[num_processes].name, process_name);
@@ -102,6 +130,12 @@ void request_memory(char *process_name, int size, char strategy) {
     if (memory[index].size == size) {
         strcpy(memory[index].status, process_name);
     } else {
+        memory = (MemoryBlock *)realloc(memory, (max_memory_size + 1) * sizeof(MemoryBlock));
+        if (memory == NULL) {
+            printf("Memory allocation failed.\n");
+            exit(1);
+        }
+
         memory[num_processes].start_address = memory[index].start_address;
         memory[num_processes].size = size;
         strcpy(memory[num_processes].status, process_name);
@@ -120,7 +154,7 @@ void release_memory(char *process_name) {
     int i, j;
     for (i = 0; i < num_processes; i++) {
         if (strcmp(processes[i].name, process_name) == 0) {
-            for (j = 0; j < MAX_MEMORY_SIZE; j++) {
+            for (j = 0; j < max_memory_size; j++) {
                 if (memory[j].start_address + memory[j].size == processes[i].start_address ||
                     memory[j].start_address == processes[i].start_address + processes[i].size) {
                     memory[j].size += processes[i].size;
@@ -145,16 +179,16 @@ void release_memory(char *process_name) {
 // Compact the memory by combining unused memory blocks into one
 void compact_memory() {
     int i, j;
-    for (i = 0; i < MAX_MEMORY_SIZE; i++) {
+    for (i = 0; i < max_memory_size; i++) {
         if (strcmp(memory[i].status, "Unused") == 0) {
-            for (j = i + 1; j < MAX_MEMORY_SIZE; j++) {
+            for (j = i + 1; j < max_memory_size; j++) {
                 if (strcmp(memory[j].status, "Unused") != 0) {
                     memory[i].size += memory[j].size;
                     strcpy(memory[j].status, "Unused");
                     break;
                 }
             }
-            if (j == MAX_MEMORY_SIZE) {
+            if (j == max_memory_size) {
                 break;
             }
         }
@@ -166,17 +200,17 @@ void compact_memory() {
 void report_status() {
     printf("Memory Status:\n");
     int i;
-    for (i = 0; i < MAX_MEMORY_SIZE; i++) {
+    for (i = 0; i < max_memory_size; i++) {
         if (strcmp(memory[i].status, "Unused") == 0) {
             int j;
-            for (j = i + 1; j < MAX_MEMORY_SIZE; j++) {
+            for (j = i + 1; j < max_memory_size; j++) {
                 if (strcmp(memory[j].status, "Unused") != 0) {
                     printf("Addresses [%d:%d] Unused\n", memory[i].start_address, memory[j - 1].start_address + memory[j - 1].size - 1);
                     i = j - 1;
                     break;
                 }
             }
-            if (j == MAX_MEMORY_SIZE) {
+            if (j == max_memory_size) {
                 printf("Addresses [%d:%d] Unused\n", memory[i].start_address, memory[i].start_address + memory[i].size - 1);
                 break;
             }
@@ -184,8 +218,8 @@ void report_status() {
             printf("Addresses [%d:%d] Process %s\n", memory[i].start_address, memory[i].start_address + memory[i].size - 1, memory[i].status);
         }
     }
-    if (i == MAX_MEMORY_SIZE) {
-        printf("Addresses [%d:%d] Unused\n", memory[i - 1].start_address + memory[i - 1].size, MAX_MEMORY_SIZE - 1);
+    if (i == max_memory_size) {
+        printf("Addresses [%d:%d] Unused\n", memory[i - 1].start_address + memory[i - 1].size, max_memory_size - 1);
     }
 
     for (i = 0; i < num_processes; i++) {

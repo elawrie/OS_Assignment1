@@ -1,257 +1,178 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-// structure to represent a block of memory
-typedef struct {
-    int start_address;
-    int size;
-    char status[10];
-} MemoryBlock;
-
-// structure to represent a process
-typedef struct {
-    char name[10];
-    int start_address;
-    int size;
-} Process;
-
-// function prototypes
-void initialize_memory(int size);
-void request_memory(char *process_name, int size, char strategy);
-void release_memory(char *process_name);
-void compact_memory();
-void report_status();
-
-
-
 // initialize global variables
-MemoryBlock *memory = NULL;
-Process *processes = NULL;
+int initial_memory_size;
 int num_processes = 0;
-int max_memory_size = 0;
+struct MemoryBlock *head;
+struct MemoryBlock *initial_block;
+struct MemoryBlock *temp;
+int last_address_space;
+int space_requested;
 
-// initialize memory with one hole representing the whole memory
+// structure to represent a block of memory
+struct MemoryBlock {
+    int start_address;
+    int end_address;
+    int space_avail;
+    char status[10];
+    struct MemoryBlock *next;
+};
+
+// function to condense all holes into one big hole 
+void condense_holes() {
+    temp = head;
+    while (temp->next != NULL && temp->next->next != NULL) {
+        if (strcmp(temp->next->status, "Unused") == 0 && strcmp(temp->next->next->status, "Unused") == 0) {
+            temp->next->next->start_address = temp->next->start_address;
+            temp->next->space_avail = temp->next->space_avail + temp->next->next->space_avail;
+            temp->next->end_address = temp->next->next->end_address;
+            struct MemoryBlock *temp_next_next = temp->next->next;
+            temp->next->next = temp_next_next->next;
+            if (temp_next_next->next != NULL) {
+                temp_next_next = temp->next;
+            }
+            free(temp_next_next);
+        } else {
+            temp = temp->next;
+        }
+    }
+}
+
+// initialize memory block 
 void initialize_memory(int size) {
-    memory = (MemoryBlock *)malloc(sizeof(MemoryBlock));
-    if (memory == NULL) {
+    head = (struct MemoryBlock *)malloc(sizeof(struct MemoryBlock));
+    initial_block = (struct MemoryBlock *)malloc(sizeof(struct MemoryBlock));
+    if (head == NULL) {
         printf("Memory allocation failed.\n");
         exit(1);
     }
 
-    memory[0].start_address = 0;
-    memory[0].size = size;
-    strcpy(memory[0].status, "Unused");
+    head->start_address = -1;
+    head->end_address = -1;
+    head->space_avail = size;
+    head->next = initial_block;
+    strcpy(head->status, "Unused");
 
-    max_memory_size = size;
+    strcpy(initial_block->status, "Unused");
+    initial_block->start_address = 0;
+    initial_block->end_address = size;
+    initial_block->space_avail = size;
+    initial_block->next = NULL;
+
+    last_address_space = size;
 }
 
-// Request memory for a process using the specified strategy
+// implement request functionality 
 void request_memory(char *process_name, int size, char strategy) {
-    int i;
-    int index = -1;
+    temp = head;
+    int leftover_space = 0;
 
-    // check if inputted size is valid 
-    if (size <= 0 || size > max_memory_size) {
-        printf("Invalid memory request size.\n");
-        return;
-    }
+    while (temp->next != NULL) {
+        if (strcmp(temp->next->status, "Unused") == 0 && temp->next->space_avail >= size) {
+            head->space_avail = head->space_avail - size;
 
-    // implement first fit strategy
-    if (strategy == 'F') {
-        for (i = 0; i < max_memory_size; i++) {
-            if (strcmp(memory[i].status, "Unused") == 0 && memory[i].size >= size) {
-                index = i;
-                // allocate memory for process
-                memory[index].status = process.name;
-                // print if allocated memory
-                printf("Memory allocated for process '%s':\n", process_name);
-                // print out memory block 
-                printf("Start Address: %d\n", memory[index].start_address);
-                break;
-            }
-        }
-    }
+            strcpy(temp->next->status, process_name);
+            temp->next->end_address = temp->next->start_address + size;
 
-    // for (i = 0; i < num_processes; i++) {
-    //     if (strcmp(processes[i].name, process_name) == 0) {
-    //         printf("Process '%s' already has memory allocated.\n", process_name);
-    //         return;
-    //     }
-    // }
+            leftover_space = temp->next->space_avail - size;
 
-    // for (i = 0; i < max_memory_size; i++) {
-    //     if (strcmp(memory[i].status, "Unused") == 0 && memory[i].size >= size) {
-    //         if (strategy == 'F' || (strategy == 'B' && (index == -1 || memory[i].size < memory[index].size)) ||
-    //             (strategy == 'W' && (index == -1 || memory[i].size > memory[index].size))) {
-    //             index = i;
-    //         }
-    //     }
-    // }
-
-    // if (index == -1) {
-    //     printf("Insufficient memory to allocate.\n");
-    //     return;
-    // }
-
-    // processes = (Process *)realloc(processes, (num_processes + 1) * sizeof(Process));
-    // if (processes == NULL) {
-    //     printf("Memory allocation failed.\n");
-    //     exit(1);
-    // }
-
-    // processes[num_processes].start_address = memory[index].start_address;
-    // processes[num_processes].size = size;
-    // strcpy(processes[num_processes].name, process_name);
-
-    // if (memory[index].size == size) {
-    //     strcpy(memory[index].status, process_name);
-    // } else {
-    //     memory = (MemoryBlock *)realloc(memory, (max_memory_size + 1) * sizeof(MemoryBlock));
-    //     if (memory == NULL) {
-    //         printf("Memory allocation failed.\n");
-    //         exit(1);
-    //     }
-
-    //     memory[num_processes].start_address = memory[index].start_address;
-    //     memory[num_processes].size = size;
-    //     strcpy(memory[num_processes].status, process_name);
-
-    //     memory[index].start_address += size;
-    //     memory[index].size -= size;
-    //     index = num_processes;
-    // }
-
-    // num_processes++;
-    // printf("Memory allocated for process '%s'.\n", process_name);
-}
-
-// Release memory allocated to a process
-void release_memory(char *process_name) {
-    // int i, j;
-    // for (i = 0; i < num_processes; i++) {
-    //     if (strcmp(processes[i].name, process_name) == 0) {
-    //         for (j = 0; j < max_memory_size; j++) {
-    //             if (memory[j].start_address + memory[j].size == processes[i].start_address ||
-    //                 memory[j].start_address == processes[i].start_address + processes[i].size) {
-    //                 memory[j].size += processes[i].size;
-    //                 break;
-    //             }
-    //         }
-    //         strcpy(memory[j].status, "Unused");
-    //         printf("Memory released for process '%s'.\n", process_name);
-    //         break;
-    //     }
-    // }
-    // if (i == num_processes) {
-    //     printf("Process '%s' has not allocated any memory.\n", process_name);
-    // } else {
-    //     for (; i < num_processes - 1; i++) {
-    //         processes[i] = processes[i + 1];
-    //     }
-    //     num_processes--;
-    // }
-}
-
-// Compact the memory by combining unused memory blocks into one
-void compact_memory() {
-    // int i, j;
-    // for (i = 0; i < max_memory_size; i++) {
-    //     if (strcmp(memory[i].status, "Unused") == 0) {
-    //         for (j = i + 1; j < max_memory_size; j++) {
-    //             if (strcmp(memory[j].status, "Unused") != 0) {
-    //                 memory[i].size += memory[j].size;
-    //                 strcpy(memory[j].status, "Unused");
-    //                 break;
-    //             }
-    //         }
-    //         if (j == max_memory_size) {
-    //             break;
-    //         }
-    //     }
-    // }
-    // printf("Memory compacted.\n");
-}
-
-// report the status of memory
-void report_status() {
-    printf("Memory Status:\n");
-    int i;
-
-    // loop through contiguous memory blocks and print out how much memory is used and how much is unused
-    for (i = 0; i < max_memory_size; i++) {
-        if (strcmp(memory[i].status, "Unused") != 0) {
-            int j;
-            for (j = i + 1; j < max_memory_size; j++) {
-                if (strcmp(memory[j].status, "Unused") != 0) {
-                    printf("Addresses [%d:%d] Unused\n", memory[i].start_address, memory[j - 1].start_address + memory[j - 1].size - 1);
-                    i = j - 1;
-                    break;
+            if (leftover_space > 0) {
+                struct MemoryBlock *new_block = (struct MemoryBlock *)malloc(sizeof(struct MemoryBlock));
+                strcpy(new_block->status, "Unused");
+                new_block->space_avail = leftover_space;
+                temp->next->space_avail = size;
+                new_block->start_address = temp->next->end_address + 1;
+                new_block->end_address = new_block->start_address + leftover_space;
+                if (new_block->end_address > last_address_space) {
+                    new_block->end_address = last_address_space;
                 }
+                new_block->next = temp->next->next;
+                temp->next->next = new_block;
             }
-            if (j == max_memory_size) {
-                printf("Addresses [%d:%d] Unused\n", memory[i].start_address, memory[i].start_address + memory[i].size - 1);
-                break;
-            }
+            return;
         } 
-        else {
-           int k;
-           // print if here
-           printf("HERE BITCH\n");
-            for (k = i + 1; k < max_memory_size; k++) {
-                if (!(strcmp(memory[k].status, "Unused") != 0)) {
-                    printf("Addresses [%d:%d] Process %s \n", memory[i].start_address, memory[k - 1].start_address + memory[k - 1].size - 1, memory[i].status);
-                    i = k - 1;
-                    break;
-                }
-            }
-            if (k == max_memory_size) {
-                printf("Addresses [%d:%d] Process %s \n", memory[i].start_address, memory[i].start_address + memory[i].size - 1, memory[i].status);
-                break;
-            } 
-        }
-        // else {
-        //     printf("Addresses [%d:%d] Process '%s'\n", memory[i].start_address, memory[i].start_address + memory[i].size - 1, memory[i].status);
-        // }
+    else {
+        temp = temp->next;
+    }  
     }
+    // if no space found 
+    printf("There is no space available for process %s.\n", process_name);
+}
 
+// implement release functionality
+void release_memory(char *process_name) {
+    temp = head;
+    struct MemoryBlock *prev = head;
+    while (temp->next != NULL) {
+        if (strcmp(temp->next->status, process_name) == 0) {
+            strcpy(temp->next->status, "Unused");
+            temp->next->space_avail = temp->next->end_address - temp->next->start_address;
+            head->space_avail = head->space_avail + temp->next->space_avail;
+            // print status of next block 
+            printf("Status of next block after the one i removed lol: %s\n", temp->next->next->status);
+            // check if next block is unused
+            if (strcmp(temp->next->next->status, "Unused") == 0) {
+                // print temp start address and temp next start address
+                printf("Temp start address: %d\n", temp->next->start_address);
+                printf("Temp next start address: %d\n", temp->next->next->start_address);
+                temp->next->next->start_address = temp->next->start_address;
+                temp->next->space_avail = temp->next->space_avail + temp->next->next->space_avail;
+                temp->next->end_address = temp->next->next->end_address;
+                temp->next->next = temp->next->next->next;
+            }
+            // check if previous block is unused
+            if (prev != head && strcmp(prev->status, "Unused") == 0) {
+                // print prev start address and temp next start address
+                printf("Prev start address: %d\n", prev->start_address);
+                printf("Temp next start address: %d\n", temp->next->start_address);
+                prev->start_address = temp->next->start_address;
+                prev->space_avail = prev->space_avail + temp->next->space_avail;
+                prev->end_address = temp->next->end_address;
+                prev->next = temp->next->next;
+            }
+            condense_holes();
+            return;
+        }
+        else {
+            prev = temp;
+            temp = temp->next;
+        }
+    }
+    // if process not found 
+    printf("Process %s not found.\n", process_name);
+}
 
-    // for (i = 0; i < max_memory_size; i++) {
-    //     if (strcmp(memory[i].status, "Unused") == 0) {
-    //         int j;
-    //         for (j = i + 1; j < max_memory_size; j++) {
-    //             if (strcmp(memory[j].status, "Unused") != 0) {
-    //                 printf("Addresses [%d:%d] Unused\n", memory[i].start_address, memory[j - 1].start_address + memory[j - 1].size - 1);
-    //                 i = j - 1;
-    //                 break;
-    //             }
-    //         }
-    //         if (j == max_memory_size) {
-    //             printf("Addresses [%d:%d] Unused\n", memory[i].start_address, memory[i].start_address + memory[i].size - 1);
-    //             break;
-    //         }
-    //     } else {
-    //         printf("Addresses [%d:%d] Process %s\n", memory[i].start_address, memory[i].start_address + memory[i].size - 1, memory[i].status);
-    //     }
-    // }
-    // if (i == max_memory_size) {
-    //     printf("Addresses [%d:%d] Unused\n", memory[i - 1].start_address + memory[i - 1].size, max_memory_size - 1);
-    // }
-
-    // for (i = 0; i < num_processes; i++) {
-    //     printf("Addresses [%d:%d] Process %s\n", processes[i].start_address, processes[i].start_address + processes[i].size - 1, processes[i].name);
-    // }
+// implement report status function 
+void report_status() {
+    temp = head;
+    printf("Memory Block:\n\n");
+    while (temp->next != NULL) {
+        printf("Start Address: %d\n", temp->next->start_address);
+        printf("End Address: %d\n", temp->next->end_address);
+        // check if hole 
+        if (strcmp(temp->next->status, "Unused") == 0) {
+            printf("Status: %s\n", temp->next->status);
+        }
+        else {
+            printf("Status: Process %s\n", temp->next->status);
+        }
+        printf("\n");
+        temp = temp->next;
+    }
+    printf("\n");
 }
 
 int main(int argc, char *argv[]) {
-
     // check for correct amount of parameters 
     if (argc != 2) {
         printf("Usage: ./allocator <memory_size>\n");
         return 1;
     }
     
-    int initial_memory_size = atoi(argv[1]);
+    initial_memory_size = atoi(argv[1]);
 
     // check for valid parameter
     if (initial_memory_size <= 0) {
@@ -259,7 +180,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    // initialize the contiguous memory block 
+    // initialize the contiguous memory block
     initialize_memory(initial_memory_size);
 
     char command[10];
@@ -267,20 +188,26 @@ int main(int argc, char *argv[]) {
     int size;
     char strategy;
 
-    // do logic for allocator commands 
+    // run logic for memory allocation simulation 
     while (1) {
         printf("allocator> ");
         scanf("%s", command);
 
         if (strcmp(command, "RQ") == 0) {
             scanf("%s %d %c", process_name, &size, &strategy);
+            // increment num_processes
+            num_processes++;
+            printf("Request Memory: %s %d %c\n", process_name, size, strategy);
             request_memory(process_name, size, strategy);
         } else if (strcmp(command, "RL") == 0) {
             scanf("%s", process_name);
+            printf("Release Memory: %s\n", process_name);
             release_memory(process_name);
         } else if (strcmp(command, "C") == 0) {
-            compact_memory();
+            printf("Compact Memory\n");
+            // compact_memory();
         } else if (strcmp(command, "STAT") == 0) {
+            printf("Report Status\n");
             report_status();
         } else if (strcmp(command, "X") == 0) {
             break;
@@ -288,6 +215,4 @@ int main(int argc, char *argv[]) {
             printf("Invalid command.\n");
         }
     }
-
-    return 0;
 }

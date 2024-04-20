@@ -5,7 +5,6 @@
 
 // initialize global variables
 int initial_memory_size;
-int num_processes = 0;
 struct MemoryBlock *head;
 struct MemoryBlock *initial_block;
 struct MemoryBlock *temp;
@@ -415,8 +414,6 @@ int main(int argc, char *argv[]) {
 
         if (strcmp(command, "RQ") == 0) {
             scanf("%s %d %c", process_name, &size, &strategy);
-            // increment num_processes
-            num_processes++;
             printf("Request Memory: %s %d %c\n", process_name, size, strategy);
             request_memory(process_name, size, strategy);
         } else if (strcmp(command, "RL") == 0) {

@@ -32,13 +32,15 @@ void get_page(int logical, int* page_table, struct TLB *tlb, int physical_memory
             frame_number = tlb->frame[i];
             tlb_hits++;
             tlb_hit = true;
-            break; // No need to continue searching
+            // if in TLB, stop searching
+            break; 
         }
     }
 
     // check if page number is in page table
     if (frame_number == -1) {
         frame_number = page_table[page_number];
+        // if frame was not found in page table, increment page fault
         if (frame_number == -1) {
             frame_number = get_frame(page_number, physical_memory);
             page_table[page_number] = frame_number;
@@ -54,7 +56,7 @@ void get_page(int logical, int* page_table, struct TLB *tlb, int physical_memory
     }
 
     // get the value from physical memory
-    int value = physical_memory[frame_number][offset];
+    int value = (int8_t) physical_memory[frame_number][offset];
     printf("Virtual address: %d Physical address: %d Value: %d\n", logical, (frame_number << 8) | offset, value);
 }
 
@@ -109,7 +111,6 @@ int main(int argc, char* argv[]) {
 
     // create physical memory 
     int physical_memory[256][256];
-
 
     // check if user entered correct number of arguments
     if (argc != 2) {

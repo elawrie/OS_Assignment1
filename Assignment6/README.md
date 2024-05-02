@@ -6,4 +6,4 @@
 
 ### Instructions:
 #### gcc vmmgr.c -o vmmgr
-#### ./vmmgr address_file
+#### ./vmmgr addresses.txt
